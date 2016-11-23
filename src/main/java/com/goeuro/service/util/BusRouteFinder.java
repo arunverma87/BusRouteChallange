@@ -50,9 +50,9 @@ public class BusRouteFinder implements Callable<Boolean> {
 	}
 
 	private boolean areStationsExist() {
-		// Will check for station existence for 1 second then return false if it
+		// Will check for station existence for 5 second then return false if it
 		// does not appear in data structure
-		final int exitCounter = 10;
+		final int exitCounter = 50;
 		int counter = 0;
 		while (counter < exitCounter) {
 			if (container.isParsingDone()) {

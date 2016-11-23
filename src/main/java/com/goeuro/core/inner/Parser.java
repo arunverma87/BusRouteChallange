@@ -5,10 +5,6 @@ import java.io.FileNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -19,37 +15,49 @@ public class Parser {
 
 	private static final Logger log = LoggerFactory.getLogger(Parser.class);
 	private final String path;
-	private ExecutorService executor;
+	private Thread thread;
 
 	public Parser(String path) {
 		this.path = path;
-		this.executor = Executors.newSingleThreadExecutor();
 	}
 
 	/**
 	 * is parsing done
 	 */
 	public boolean isDone() {
-		return this.executor.isShutdown();
+		return !this.thread.isAlive();
 	}
 
 	/**
 	 * Parse and store in to supplied data structure
 	 * 
-	 * @param dataStructure {@link BusRouteDataStructure}
+	 * @param dataStructure
+	 *            {@link BusRouteDataStructure}
 	 * @throws ExecutionException
 	 * @throws InterruptedException
 	 * @throws FileNotFoundException
 	 */
 	public void parse(BusRouteDataStructure dataStructure) {
+		thread = new Thread(new Parse(dataStructure));
+		thread.run();
+	}
 
-		Future<Boolean> task = executor.submit(() -> {
-			if (!(new File(this.path)).exists()) {
+	private class Parse implements Runnable {
+
+		private BusRouteDataStructure dataStructure;
+
+		Parse(BusRouteDataStructure dataStructure) {
+			this.dataStructure = dataStructure;
+		}
+
+		@Override
+		public void run() {
+			if (!(new File(Parser.this.path)).exists()) {
 				log.error("File not found on given path!");
-				return false;
+				return;
 			}
 
-			try (Stream<String> fileStream = Files.lines(Paths.get(this.path))) {
+			try (Stream<String> fileStream = Files.lines(Paths.get(Parser.this.path))) {
 				fileStream.skip(1).forEach(line -> {
 					if (line.trim().length() > 0) {
 						String[] items = line.split("\\s+");
@@ -59,24 +67,14 @@ public class Parser {
 						});
 					}
 				});
-				return true;
 			} catch (NumberFormatException numEx) {
 				log.error("can not parse in to Integer", numEx);
-				return false;
 			} catch (Exception ex) {
 				log.error("Error occured while parsing file.", ex);
-				return false;
 			}
-		});
 
-		try {
-			task.get();			
-			this.executor.shutdown();
-			this.executor.awaitTermination(5, TimeUnit.MINUTES);
-		} catch (InterruptedException e) {
-			this.executor.shutdownNow();
-		} catch (ExecutionException e) {
-			this.executor.shutdownNow();
-		}		
+		}
+
 	}
+
 }
