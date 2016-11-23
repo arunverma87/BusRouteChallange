@@ -7,13 +7,13 @@ read -p "Enter"
 
 # Keep the pwd in mind!
 # Example: RUN="java -jar $DIR/target/magic.jar"
-RUN="java -jar ./target/code.web-1.0.0.jar server ./target/application.yml"
+RUN="java -jar $DIR/target/code.web-1.0.0.jar server $DIR/target/application.yml"
 NAME="webservice"
 
 DATA_FILE=$2
 
-PIDFILE=./target/$NAME.pid
-LOGFILE=./target/$NAME.log
+PIDFILE=$DIR/target/$NAME.pid
+LOGFILE=$DIR/target/$NAME.log
 
 echo $PIDFILE
 
